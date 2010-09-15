@@ -13,7 +13,7 @@ lmb_require('limb/core/src/lmbArrayHelper.class.php');
  * class lmbUri.
  *
  * @package net
- * @version $Id: lmbUri.class.php 8124 2010-02-03 17:03:21Z 3dmax $
+ * @version $Id$
  */
 class lmbUri extends lmbSet
 {
@@ -434,15 +434,52 @@ class lmbUri extends lmbSet
   */
   protected function _parseQueryString($query_string)
   {
-    parse_str($query_string, $arr);
+    $items = array();
 
-    foreach($arr as $key => $item)
+    if(!$query_string)
+      return $items;
+
+    foreach(explode('&', $query_string) as $pair)
     {
-      if(!is_array($item))
-        $arr[$key] = rawurldecode($item);
+      $parts = explode('=', $pair);
+      if(!is_array($parts) || count($parts) != 2)
+        continue;
+
+      if($pos = strpos($parts[0], '['))
+      {
+        $key = substr($parts[0], 0, $pos);
+        $subkey = substr($parts[0], $pos + 1, -1);
+      }
+      else
+      {
+        $key = $parts[0];
+        $subkey = null;
+      }
+
+      $val = urldecode($parts[1]);
+      if(isset($items[$key]))
+      {
+        if(is_array($items[$key]))
+        {
+          if(!is_null($subkey))
+            $items[$key][$subkey] = $val;
+          else
+            $items[$key][] = $val;
+        }
+        else
+          $items[$key] = array($items[$key], $val);
+      }
+      else
+      {
+        if(!is_null($subkey))
+          $items[$key][$subkey] = $val;
+        else
+          $items[$key] = $val;
+      }
     }
 
-    return $arr;
+    ksort($items);
+    return $items;
   }
 
   /**
