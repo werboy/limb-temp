@@ -21,8 +21,8 @@ class lmbLogFileWriter extends lmbLogBaseWriter
 
   function __construct(lmbUri $dsn)
   {
-  	$this->log_file = $dsn->getPath();
-  	parent::__construct($dsn);
+    $this->log_file = $dsn->getPath();
+    parent::__construct($dsn);
   }
 
   protected function _write(lmbLogEntry $entry)
@@ -43,12 +43,19 @@ class lmbLogFileWriter extends lmbLogBaseWriter
       $log_message = "=========================[{$time}]";
 
       if(isset($_SERVER['REMOTE_ADDR']))
-        $log_message .= '[' . $_SERVER['REMOTE_ADDR'] . ']';
+        $log_message .= "[" . $_SERVER['REMOTE_ADDR'] . "]";
 
       if(isset($_SERVER['REQUEST_URI']))
-        $log_message .= '[' . $_SERVER['REQUEST_URI'] . ']';
+      {
+        $log_message .= "[";
 
-      $log_message .= "=========================\n" . $message;
+        if(isset($_SERVER['REQUEST_METHOD']))
+          $log_message .= $_SERVER['REQUEST_METHOD'] . " - ";
+
+        $log_message .= $_SERVER['REQUEST_URI'] . "]";
+      }
+
+      $log_message .= "=========================" . PHP_EOL . $message;
 
       fwrite($fh, $log_message);
       @flock($fh, LOCK_UN);
@@ -58,8 +65,8 @@ class lmbLogFileWriter extends lmbLogBaseWriter
     }
     else
     {
-      throw new lmbFsException("Cannot open log file '$file_name' for writing\n" .
-                               "The web server must be allowed to modify the file.\n" .
+      throw new lmbFsException("Cannot open log file '$file_name' for writing" . PHP_EOL .
+                               "The web server must be allowed to modify the file." . PHP_EOL .
                                "File logging for '$file_name' is disabled.");
     }
   }
@@ -69,5 +76,3 @@ class lmbLogFileWriter extends lmbLogBaseWriter
     return $this->log_file;
   }
 }
-
-
